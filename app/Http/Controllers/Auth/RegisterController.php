@@ -3,9 +3,15 @@
 namespace App\Http\Controllers\Auth;
 
 use App\User;
+use App\Mail\verifyEmail;
 use App\Http\Controllers\Controller;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Support\Str;
 
 class RegisterController extends Controller
 {
@@ -22,6 +28,7 @@ class RegisterController extends Controller
 
     use RegistersUsers;
 
+    public $userData;
     /**
      * Where to redirect users after registration.
      *
@@ -37,6 +44,7 @@ class RegisterController extends Controller
     public function __construct()
     {
         $this->middleware('guest');
+        $this->userData = new User();
     }
 
     /**
@@ -62,10 +70,52 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        return User::create([
+        Session::flash('status','подтвердите Ваш Емаил');
+
+        $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => bcrypt($data['password']),
+            'activationCode' => Str::random(40),
         ]);
+
+        $this->sendEmail($user);
+
+        return $user;
+
+    }
+    public function verifyEmailFirst()
+    {
+        return view('email.verifyEmailFirst');
+    }
+
+    public function sendEmail($thisUser)
+    {
+
+        Mail::to($thisUser['email'])->send(new verifyEmail($thisUser));
+    }
+
+    public function sendEmailDone($email,$verifyToken)
+    {
+        Session::flash('status','Ваш аккаунт активирован');
+
+        $user = $this->userData->userInfo($email,$verifyToken);
+
+        if($user){
+            $this->userData->updateStatus($email,$verifyToken);
+        }else{
+            Session::flash('status','User not found');
+        }
+
+        return redirect(route('login'));
+    }
+
+    public function register(Request $request)
+    {
+        $this->validator($request->all())->validate();
+
+        event(new Registered($user = $this->create($request->all())));
+
+        return redirect(route('login'));
     }
 }

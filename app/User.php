@@ -15,7 +15,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password',
+        'name', 'email', 'password','activationCode','status'
     ];
 
     /**
@@ -26,4 +26,17 @@ class User extends Authenticatable
     protected $hidden = [
         'password', 'remember_token',
     ];
+
+
+    public function userInfo($email,$verifyToken)
+    {
+        $response = User::where(['email'=>$email,'activationCode'=>$verifyToken])->first();
+
+        return  $response;
+    }
+
+    public function updateStatus($email,$verifyToken)
+    {
+        User::where(['email'=>$email,'activationCode'=>$verifyToken])->update(['status'=>1,'activationCode'=>NULL]);
+    }
 }
