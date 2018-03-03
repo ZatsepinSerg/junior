@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\User;
 use App\Mail\verifyEmail;
 use App\Http\Controllers\Controller;
+use App\UserRegistrationLog;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -29,6 +30,7 @@ class RegisterController extends Controller
     use RegistersUsers;
 
     public $userData;
+    public $userLog;
     /**
      * Where to redirect users after registration.
      *
@@ -45,6 +47,7 @@ class RegisterController extends Controller
     {
         $this->middleware('guest');
         $this->userData = new User();
+        $this->userLog = new UserRegistrationLog();
     }
 
     /**
@@ -103,6 +106,8 @@ class RegisterController extends Controller
 
         if($user){
             $this->userData->updateStatus($email,$verifyToken);
+            $this->userLog->registerTime($user->id);
+
         }else{
             Session::flash('status','User not found');
         }

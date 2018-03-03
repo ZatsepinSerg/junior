@@ -27,15 +27,23 @@ class User extends Authenticatable
         'password', 'remember_token',
     ];
 
-
-    public function userInfo($email,$verifyToken)
+    /**
+     * @param $email
+     * @param $verifyToken
+     * @return mixed
+     */
+    public function userInfo($email, $verifyToken)
     {
         $response = User::where(['email'=>$email,'activationCode'=>$verifyToken])->first();
 
         return  $response;
     }
 
-    public function updateStatus($email,$verifyToken)
+    /**
+     * @param $email
+     * @param $verifyToken
+     */
+    public function updateStatus($email, $verifyToken)
     {
         User::where(['email'=>$email,'activationCode'=>$verifyToken])->update(['status'=>1,'activationCode'=>NULL]);
     }
